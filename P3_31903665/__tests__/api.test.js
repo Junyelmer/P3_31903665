@@ -28,4 +28,14 @@ describe('API endpoints', () => {
       expect(res.text).toBe('');
     });
   });
+
+  describe('GET /api-docs', () => {
+    it('sirve la UI de Swagger (HTML)', async () => {
+      const res = await request(app)
+        .get('/api-docs')
+        .expect(200)
+        .expect('Content-Type', /html/);
+      expect(res.text).toMatch(/Swagger UI|swagger-ui/);
+    });
+  });
 });

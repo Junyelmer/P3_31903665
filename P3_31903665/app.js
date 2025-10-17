@@ -23,7 +23,7 @@ const swaggerOptions = {
     ],
   },
   // Especifica qué archivos deben ser analizados para buscar comentarios JSDoc
-  apis: ['./app.js'], // Esto apunta al archivo actual
+  apis: ['./app.js', './routes/*.js'], // Añadir rutas si hay endpoints en /routes
 };
 
 const swaggerSpecs = swaggerJsdoc(swaggerOptions);
