@@ -3,7 +3,7 @@ require('dotenv').config(); // Carga las variables de entorno
 const db = require('./models'); // <-- Debe ser './models' si ambos están en la raíz
 
 var express = require('express');
-var path = require('path'); // <-- agregado cerca de la linea 5
+var path = require('path'); // asegúrate de tener esto al inicio
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
@@ -20,47 +20,22 @@ const swaggerOptions = {
       version: '1.0.0',
       description: 'Documentación de los endpoints de la asignación de la P3.',
     },
-    servers: [
-      { url: '/' }
-    ],
+    servers: [{ url: '/' }],
     components: {
       securitySchemes: {
-        bearerAuth: {
-          type: 'http',
-          scheme: 'bearer',
-          bearerFormat: 'JWT',
-          description: 'Token JWT (ej: Bearer [token])'
-        }
-      },
-      schemas: {
-        JSendSuccess: {
-          type: 'object',
-          properties: {
-            status: { type: 'string', example: 'success' },
-            data: { type: 'object' }
-          }
-        },
-        JSendFail: {
-          type: 'object',
-          properties: {
-            status: { type: 'string', example: 'fail' },
-            data: { type: 'object' }
-          }
-        },
-        JSendError: {
-          type: 'object',
-          properties: {
-            status: { type: 'string', example: 'error' },
-            message: { type: 'string' }
-          }
-        }
+        bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }
       }
     }
   },
   apis: [
+    // Opción robusta (recomendada)
     path.join(__dirname, 'app.js'),
-    path.join(__dirname, 'routes', '*.js')
-  ],
+    path.join(__dirname, 'routes', '*.js'),
+
+    // Alternativa simple (solo si sabes que Render/jest resolverán desde la raíz)
+    // './app.js',
+    // './routes/*.js'
+  ]
 };
 
 const swaggerSpecs = swaggerJsdoc(swaggerOptions);
