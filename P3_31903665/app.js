@@ -13,29 +13,24 @@ const swaggerUi = require('swagger-ui-express');
 
 // Opciones de configuración de Swagger
 const swaggerOptions = {
-  definition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'API de Asignación P3',
-      version: '1.0.0',
-      description: 'Documentación de los endpoints de la asignación de la P3.',
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'API de Asignación P3',
+            version: '1.0.0',
+            description: 'Documentación de los endpoints de la asignación de la P3.',
+        },
+        servers: [{ url: '/' }],
+        components: {
+            securitySchemes: {
+                bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }
+            }
+        }
     },
-    servers: [{ url: '/' }],
-    components: {
-      securitySchemes: {
-        bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }
-      }
-    }
-  },
-  apis: [
-    // Opción robusta (recomendada)
-    path.join(__dirname, 'app.js'),
-    path.join(__dirname, 'routes', '*.js'),
-
-    // Alternativa simple (solo si sabes que Render/jest resolverán desde la raíz)
-    // './app.js',
-    // './routes/*.js'
-  ]
+    apis: [
+        require('path').join(__dirname, 'app.js'),
+        require('path').join(__dirname, 'routes', '*.js')
+    ]
 };
 
 const swaggerSpecs = swaggerJsdoc(swaggerOptions);
@@ -92,18 +87,18 @@ app.use('/users', usersRouter); // Rutas protegidas con JWT
  *                       example: V01
  */
 app.get('/about', function(req, res, next) {
-  // ⚠ Reemplaza con tus datos reales si lo deseas
-  const miInfo = {
-    nombreCompleto: "Gabriel Andres Ochoa Padron",
-    cedula: "31903665",
-    seccion: "2"
-  };
+    // ⚠ Reemplaza con tus datos reales si lo deseas
+    const miInfo = {
+        nombreCompleto: "Gabriel Andres Ochoa Padron",
+        cedula: "31903665",
+        seccion: "2"
+    };
 
-  // Respuesta JSend (status: success, data: objeto)
-  res.json({
-    status: "success",
-    data: miInfo
-  });
+    // Respuesta JSend (status: success, data: objeto)
+    res.json({
+        status: "success",
+        data: miInfo
+    });
 });
 // ------------------------------------------------------------------
 
@@ -121,8 +116,8 @@ app.get('/about', function(req, res, next) {
  *         description: OK. El servicio está activo.
  */
 app.get('/ping', function(req, res, next) {
-  // Solo código 200 OK y cuerpo vacío
-  res.status(200).send();
+    // Solo código 200 OK y cuerpo vacío
+    res.status(200).send();
 });
 // ------------------------------------------------------------------
 
