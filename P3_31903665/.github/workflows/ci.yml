@@ -1,0 +1,37 @@
+name: CI - Pruebas y Construcción
+
+# Configura cuándo se ejecuta el workflow
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    # Define el ambiente de ejecución (una máquina virtual con Ubuntu)
+    runs-on: ubuntu-latest
+
+    # Define el entorno de Node.js a usar
+    strategy:
+      matrix:
+        node-version: [18.x] # Usamos una versión LTS
+
+    steps:
+    # 1. Checkout del código: Descarga tu repositorio
+    - uses: actions/checkout@v4
+
+    # 2. Configurar el entorno de Node.js
+    - name: Usar Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm' # Optimiza la instalación
+
+    # 3. Instalar las dependencias (el Build Command de Render)
+    - name: Instalación de dependencias
+      run: npm install
+
+    # 4. Ejecutar la suite de pruebas (el comando 'npm test' que ya configuraste)
+    - name: Ejecutar pruebas
+      run: npm test

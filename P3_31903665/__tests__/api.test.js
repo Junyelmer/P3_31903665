@@ -2,6 +2,15 @@ const request = require('supertest');
 const app = require('../app');
 
 describe('API endpoints', () => {
+  it('GET /api-docs sirve la UI de Swagger (HTML)', async () => {
+    // usar slash final para evitar el 301
+    const res = await request(app)
+      .get('/api-docs/') 
+      .expect(200)
+      .expect('Content-Type', /html/);
+    expect(res.text).toMatch(/Swagger UI|swagger-ui/);
+  });
+
   describe('GET /about', () => {
     it('responds with JSend "success" and personal info', async () => {
       const res = await request(app)
@@ -26,16 +35,6 @@ describe('API endpoints', () => {
         .expect(200);
 
       expect(res.text).toBe('');
-    });
-  });
-
-  describe('GET /api-docs', () => {
-    it('sirve la UI de Swagger (HTML)', async () => {
-      const res = await request(app)
-        .get('/api-docs')
-        .expect(200)
-        .expect('Content-Type', /html/);
-      expect(res.text).toMatch(/Swagger UI|swagger-ui/);
     });
   });
 });

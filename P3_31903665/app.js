@@ -1,3 +1,7 @@
+require('dotenv').config(); // Carga las variables de entorno
+// La siguiente línea es importante para inicializar la conexión a la BD
+const db = require('./models'); // <-- Debe ser './models' si ambos están en la raíz
+
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
@@ -14,22 +18,54 @@ const swaggerOptions = {
     info: {
       title: 'API de Asignación P3',
       version: '1.0.0',
-      description: 'Documentación de los endpoints de la asignación de la P3 (sobre y ping).',
+      description: 'Documentación de los endpoints de la asignación de la P3.',
     },
     servers: [
-      {
-        url: '/', // La ruta base
-      },
+      { url: '/' }
     ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'Token JWT (ej: Bearer [token])'
+        }
+      },
+      // Puedes añadir aquí esquemas de datos (por ejemplo JSend) si los deseas
+      schemas: {
+        JSendSuccess: {
+          type: 'object',
+          properties: {
+            status: { type: 'string', example: 'success' },
+            data: { type: 'object' }
+          }
+        },
+        JSendFail: {
+          type: 'object',
+          properties: {
+            status: { type: 'string', example: 'fail' },
+            data: { type: 'object' }
+          }
+        },
+        JSendError: {
+          type: 'object',
+          properties: {
+            status: { type: 'string', example: 'error' },
+            message: { type: 'string' }
+          }
+        }
+      }
+    }
   },
-  // Especifica qué archivos deben ser analizados para buscar comentarios JSDoc
-  apis: ['./app.js', './routes/*.js'], // Añadir rutas si hay endpoints en /routes
-};
+  apis: ['./app.js', './routes/*.js'],};
 
 const swaggerSpecs = swaggerJsdoc(swaggerOptions);
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+// --- Importación de Rutas ---
+// var indexRouter = require('./routes/index'); // (si existe) 
+const authRouter = require(path.join(__dirname, 'routes', 'auth')); // <-- ahora robusto
+const usersRouter = require(path.join(__dirname, 'routes', 'users')); // <-- ahora robusto
 
 var app = express();
 
@@ -39,8 +75,10 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Configuración del endpoint de la documentación
+// --- Montaje de Rutas ---
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+app.use('/auth', authRouter); // Rutas públicas: /auth/register, /auth/login
+app.use('/users', usersRouter); // Rutas protegidas con JWT
 
 // ------------------------------------------------------------------
 // Documentación y implementación de GET /about
@@ -110,7 +148,5 @@ app.get('/ping', function(req, res, next) {
 });
 // ------------------------------------------------------------------
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
-
+// NO INICIES EL SERVIDOR AQUÍ; exporta la app para tests y bin/www
 module.exports = app;
