@@ -3,7 +3,7 @@ require('dotenv').config(); // Carga las variables de entorno
 const db = require('./models'); // <-- Debe ser './models' si ambos están en la raíz
 
 var express = require('express');
-var path = require('path');
+var path = require('path'); // <-- agregado cerca de la linea 5
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 
@@ -32,7 +32,6 @@ const swaggerOptions = {
           description: 'Token JWT (ej: Bearer [token])'
         }
       },
-      // Puedes añadir aquí esquemas de datos (por ejemplo JSend) si los deseas
       schemas: {
         JSendSuccess: {
           type: 'object',
@@ -58,7 +57,11 @@ const swaggerOptions = {
       }
     }
   },
-  apis: ['./app.js', './routes/*.js'],};
+  apis: [
+    path.join(__dirname, 'app.js'),
+    path.join(__dirname, 'routes', '*.js')
+  ],
+};
 
 const swaggerSpecs = swaggerJsdoc(swaggerOptions);
 
