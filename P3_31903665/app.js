@@ -43,8 +43,12 @@ const usersRouter = require(path.join(__dirname, 'routes', 'users')); // <-- aho
 var app = express();
 
 app.use(logger('dev'));
-app.use(express.json({ limit: '10mb' })); // <-- ahora robusto
-app.use(express.urlencoded({ extended: false, limit: '10mb' })); // <-- ahora robusto
+
+// ESTAS LÍNEAS SON CRUCIALES PARA EL ERROR 400 (Bad Request)
+// Tu configuración actual con límite de 10mb es robusta, pero verifica que sea esta:
+app.use(express.json({ limit: '10mb' })); // Lee cuerpos de solicitud en formato JSON
+app.use(express.urlencoded({ extended: false, limit: '10mb' })); // Lee cuerpos de solicitud URL-encoded
+
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
