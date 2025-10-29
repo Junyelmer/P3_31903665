@@ -16,20 +16,33 @@ const swaggerOptions = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'API de Asignación P3',
+            title: 'API de Asignación P3 - Gabriel Ochoa',
             version: '1.0.0',
             description: 'Documentación de los endpoints de la asignación de la P3.',
+            contact: {
+                name: "Gabriel Andres Ochoa Padron",
+                email: "31903665"
+            }
         },
-        servers: [{ url: '/' }],
+        servers: [
+            { 
+                url: '/',
+                description: 'Servidor principal'
+            }
+        ],
         components: {
             securitySchemes: {
-                bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }
+                bearerAuth: { 
+                    type: 'http', 
+                    scheme: 'bearer', 
+                    bearerFormat: 'JWT' 
+                }
             }
         }
     },
     apis: [
-        require('path').join(__dirname, 'app.js'),
-        require('path').join(__dirname, 'routes', '*.js')
+        './app.js',
+        './routes/*.js'
     ]
 };
 
@@ -124,6 +137,111 @@ app.get('/ping', function(req, res, next) {
     res.status(200).send();
 });
 // ------------------------------------------------------------------
+// Documentación Swagger completa
+// ------------------------------------------------------------------
 
-// NO INICIES EL SERVIDOR AQUÍ; exporta la app para tests y bin/www
+/**
+ * @openapi
+ * tags:
+ *   - name: General
+ *     description: Endpoints generales de la API
+ *   - name: Auth
+ *     description: Autenticación de usuarios
+ *   - name: Users
+ *     description: Gestión de usuarios (requiere autenticación)
+ */
+
+/**
+ * @openapi
+ * /auth/register:
+ *   post:
+ *     summary: Registrar nuevo usuario
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - nombreCompleto
+ *               - email
+ *               - password
+ *             properties:
+ *               nombreCompleto:
+ *                 type: string
+ *                 example: "Gabriel Andres Ochoa Padron"
+ *               email:
+ *                 type: string
+ *                 example: "gabriel@example.com"
+ *               password:
+ *                 type: string
+ *                 example: "password123"
+ *     responses:
+ *       201:
+ *         description: Usuario registrado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         nombreCompleto:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                     token:
+ *                       type: string
+ *       400:
+ *         description: Error en los datos de entrada
+ */
+
+/**
+ * @openapi
+ * /auth/login:
+ *   post:
+ *     summary: Iniciar sesión
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: "gabriel@example.com"
+ *               password:
+ *                 type: string
+ *                 example: "password123"
+ *     responses:
+ *       200:
+ *         description: Login exitoso
+ *       401:
+ *         description: Credenciales inválidas
+ */
+
+// Ruta de health check para Render
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'success', 
+    message: 'API is running successfully',
+    timestamp: new Date().toISOString()
+  });
+});
+
 module.exports = app;
