@@ -34,4 +34,13 @@ jobs:
 
     # 4. Ejecutar la suite de pruebas (el comando 'npm test' que ya configuraste)
     - name: Ejecutar pruebas
-      run: npm test
+      run: |
+        # Este paso asegura que el binario de Jest sea ejecutable si hay problemas de permisos.
+        # Instala dependencias de nuevo en el entorno de runner (sólo si es necesario).
+        npm install
+
+        # Ejecuta Jest directamente con npx para usar el binario local del proyecto.
+        npx jest
+
+        # Alternativa (descomentar si lo prefieres)
+        # npm test

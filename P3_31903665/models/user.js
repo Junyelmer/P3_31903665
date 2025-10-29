@@ -5,35 +5,38 @@ const bcrypt = require('bcryptjs');
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
-      // define association here
+      // Definir asociaciones aquí si las hubiera (ej: hasMany, belongsTo)
     }
-    // Metodo para validar la contrasena
+
+    // Método para comparar contraseñas
     async comparePassword(candidatePassword) {
       return bcrypt.compare(candidatePassword, this.password);
     }
   }
+
   User.init({
-    // Ajustado a nombreCompleto para coincidir con la migración
-    nombreCompleto: { 
-      type: DataTypes.STRING, 
-      allowNull: false 
+    nombreCompleto: {
+      type: DataTypes.STRING,
+      allowNull: false
     },
-    email: { 
-      type: DataTypes.STRING, 
-      unique: true, 
-      allowNull: false, 
-      validate: { isEmail: true } 
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: true
+      }
     },
-    password: { 
-      type: DataTypes.STRING, 
-      allowNull: false 
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false
     }
   }, {
     sequelize,
     modelName: 'User',
     hooks: {
-      // HOOK: Hashing de contrasena antes de guardar
       beforeCreate: async (user) => {
+        // Requisito: Las contraseñas deben almacenarse usando un algoritmo de hash seguro (bcrypt)
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(user.password, salt);
       },
@@ -46,7 +49,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   });
 
-  // IMPORTANTE: Este método asegura que la contraseña nunca se incluya en las respuestas JSON
+  // Evitar exponer password en JSON
   User.prototype.toJSON = function () {
     const values = { ...this.get() };
     delete values.password;

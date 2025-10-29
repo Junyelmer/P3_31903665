@@ -1,56 +1,75 @@
 #!/usr/bin/env node
-'use strict';
 
-const app = require('../app'); // <-- correcto: sube un nivel para encontrar app.js
-const debug = require('debug')('p3-31903665:server');
-const http = require('http');
-const db = require('../models'); // Para cerrar sequelize en shutdown
+/**
+ * Module dependencies.
+ */
 
-// Get port from environment and store in Express.
-const port = normalizePort(process.env.PORT || '3000'); // <-- Render usa process.env.PORT
+var app = require('../app');
+var debug = require('debug')('p3-31903665:server');
+var http = require('http');
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
-// Create HTTP server.
+/**
+ * Create HTTP server.
+ */
+
 var server = http.createServer(app);
 
-// ESTA LÍNEA ES CRUCIAL PARA EL ERROR 502
-server.listen(port, '0.0.0.0');
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
 
-// Graceful shutdown: cerrar servidor y conexión a la BD
-process.on('SIGTERM', () => {
-  console.log('SIGTERM recibido: cerrando servidor...');
-  server.close(async () => {
-    try {
-      if (db && db.sequelize) await db.sequelize.close();
-      console.log('Conexión a la BD cerrada. Saliendo.');
-      process.exit(0);
-    } catch (err) {
-      console.error('Error cerrando BD:', err);
-      process.exit(1);
-    }
-  });
-});
+/**
+ * Normalize a port into a number, string, or false.
+ */
 
 function normalizePort(val) {
-  const p = parseInt(val, 10);
-  if (isNaN(p)) return val;
-  if (p >= 0) return p;
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
   return false;
 }
 
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
 function onError(error) {
-  if (error.syscall !== 'listen') throw error;
-  const bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      console.error(bind + ' requiere privilegios elevados');
+      console.error(bind + ' requires elevated privileges');
       process.exit(1);
       break;
     case 'EADDRINUSE':
-      console.error(bind + ' ya está en uso');
+      console.error(bind + ' is already in use');
       process.exit(1);
       break;
     default:
@@ -58,9 +77,15 @@ function onError(error) {
   }
 }
 
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
 function onListening() {
-  const addr = server.address();
-  const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
   debug('Listening on ' + bind);
-  console.log('Servidor escuchando en ' + bind);
+  console.log('🚀 Server running on port ' + addr.port);
 }

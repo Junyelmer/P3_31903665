@@ -37,8 +37,8 @@ const swaggerSpecs = swaggerJsdoc(swaggerOptions);
 
 // --- Importación de Rutas ---
 // var indexRouter = require('./routes/index'); // (si existe) 
-const authRouter = require(path.join(__dirname, 'routes', 'auth')); // <-- ahora robusto
-const usersRouter = require(path.join(__dirname, 'routes', 'users')); // <-- ahora robusto
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
 
 var app = express();
 
@@ -54,8 +54,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Montaje de Rutas ---
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
-app.use('/auth', authRouter); // Rutas públicas: /auth/register, /auth/login
-app.use('/users', usersRouter); // Rutas protegidas con JWT
+app.use('/auth', authRoutes); // Ruta para registro y login
+app.use('/users', userRoutes); // Ruta para gestión de usuarios
 
 // ------------------------------------------------------------------
 // Documentación y implementación de GET /about

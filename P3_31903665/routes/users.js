@@ -23,11 +23,16 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
-const { protect } = require('../middlewares/authMiddleware'); // IMPORTANTE
+const { protect } = require('../middleware/auth'); // Importar el middleware
 
-// Aplica proteccion a todas las rutas de /users
+// Aplicar el middleware 'protect' a TODAS las rutas de /users (Requisito 2 y 4)
 router.use(protect);
 
-router.get('/', userController.getAllUsers);
+// Rutas protegidas (Requisito 2: CRUD)
+router.get('/', userController.getAllUsers); // GET /users
+router.get('/:id', userController.getUserById); // GET /users/:id
+router.post('/', userController.createUser); // POST /users
+router.put('/:id', userController.updateUser); // PUT /users/:id
+router.delete('/:id', userController.deleteUser); // DELETE /users/:id
 
 module.exports = router;

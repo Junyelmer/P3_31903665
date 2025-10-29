@@ -1,54 +1,73 @@
-const db = require('../models');
-const signToken = require('../utils/jwt');
-const { success, fail, error } = require('../utils/jsend');
+'use strict';
+
+const { User } = require('../models');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+// Token secreto, debe ser cargado desde variables de entorno
+const JWT_SECRET = process.env.JWT_SECRET || 'mi_clave_secreta_super_segura';
 
 // POST /auth/register
 exports.register = async (req, res) => {
-    // Usamos nombreCompleto para ser consistentes con el modelo
-    const { nombreCompleto, email, password } = req.body;
     try {
-        // La validación de email único y el hasheo de contraseña ocurren en el modelo
-        const user = await db.User.create({ nombreCompleto, email, password });
+        // El hashing se hace en el hook del modelo user.js
+        const user = await User.create(req.body);
 
-        // Emitir JWT
-        const token = signToken(user.id);
-        
-        // El método toJSON() del modelo ya se encarga de no enviar la contraseña
-        res.status(201).json(success({ user, token }));
+        // Generar JWT
+        const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '24h' });
 
-    } catch (err) {
-        if (err.name === 'SequelizeUniqueConstraintError') {
-            return res.status(409).json(fail({ email: 'El email ya está registrado' }));
+        // Respuesta JSend
+        res.status(201).json({
+            status: 'success',
+            data: {
+                user: {
+                    id: user.id,
+                    nombreCompleto: user.nombreCompleto,
+                    email: user.email
+                },
+                token
+            }
+        });
+    } catch (error) {
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            return res.status(400).json({ status: 'error', message: 'El email ya está registrado.' });
         }
-        res.status(500).json(error(err.message));
+        res.status(500).json({ status: 'error', message: error.message });
     }
 };
 
 // POST /auth/login
 exports.login = async (req, res) => {
     const { email, password } = req.body;
-
-    // 1. Verificar si existen email y password
-    if (!email || !password) {
-        return res.status(400).json(fail({ credentials: 'Por favor, proporcione email y contraseña' }));
-    }
-
     try {
-        // 2. Buscar usuario y verificar contraseña
-        const user = await db.User.findOne({ where: { email } });
+        const user = await User.findOne({ where: { email } });
 
-        if (!user || !(await user.comparePassword(password))) {
-            // Usamos 401 Unauthorized para fallos de credenciales
-            return res.status(401).json(fail({ credentials: 'Credenciales inválidas' }));
+        if (!user) {
+            return res.status(401).json({ status: 'error', message: 'Credenciales inválidas' });
         }
 
-        // 3. Emitir token si las credenciales son correctas
-        const token = signToken(user.id);
+        const isMatch = await bcrypt.compare(password, user.password);
 
-        // El método toJSON() del modelo ya se encarga de no enviar la contraseña
-        res.status(200).json(success({ user, token }));
+        if (!isMatch) {
+            return res.status(401).json({ status: 'error', message: 'Credenciales inválidas' });
+        }
 
-    } catch (err) {
-        res.status(500).json(error(err.message));
+        // Generar JWT
+        const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '24h' });
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                user: {
+                    id: user.id,
+                    nombreCompleto: user.nombreCompleto,
+                    email: user.email
+                },
+                token
+            }
+        });
+
+    } catch (error) {
+        res.status(500).json({ status: 'error', message: error.message });
     }
 };

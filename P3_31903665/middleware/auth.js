@@ -1,24 +1,35 @@
 const jwt = require('jsonwebtoken');
-const { User } = require('../db');
-const secret = process.env.JWT_SECRET || 'dev_jwt_secret';
 
-module.exports = async (req, res, next) => {
-  const header = req.headers.authorization;
-  if (!header) return res.status(401).json({ status: 'fail', data: { message: 'No token provided' } });
+// Token secreto, debe ser cargado desde variables de entorno
+const JWT_SECRET = process.env.JWT_SECRET || 'mi_clave_secreta_superura';
 
-  const parts = header.split(' ');
-  if (parts.length !== 2 || parts[0] !== 'Bearer') {
-    return res.status(401).json({ status: 'fail', data: { message: 'Invalid authorization format' } });
-  }
+const protect = (req, res, next) => {
+    let token;
 
-  const token = parts[1];
-  try {
-    const payload = jwt.verify(token, secret);
-    const user = await User.findByPk(payload.id);
-    if (!user) return res.status(401).json({ status: 'fail', data: { message: 'User not found' } });
-    req.user = user;
-    next();
-  } catch (err) {
-    return res.status(401).json({ status: 'fail', data: { message: 'Invalid token' } });
-  }
+    // 1. Obtener el token del encabezado (Bearer <token>)
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        try {
+            // El token es la segunda parte del string 'Bearer <token>'
+            token = req.headers.authorization.split(' ')[1];
+            
+            // 2. Verificar el token
+            const decoded = jwt.verify(token, JWT_SECRET);
+            
+            // Adjuntar el ID del usuario al request (útil para GET /users/:id, etc.)
+            req.userId = decoded.id;
+            
+            return next();
+
+        } catch (error) {
+            // Error si el token es inválido o expiró
+            return res.status(401).json({ status: 'error', message: 'Token inválido o expirado' });
+        }
+    }
+
+    // 3. Requisito: Rechazar peticiones sin token
+    if (!token) {
+        return res.status(401).json({ status: 'error', message: 'Acceso denegado: No se proporcionó token' });
+    }
 };
+
+module.exports = { protect };
