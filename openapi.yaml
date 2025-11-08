@@ -1,0 +1,585 @@
+openapi: 3.0.0
+info:
+  title: API de Asignación P3 - Gabriel Ochoa
+  version: '1.0.0'
+  description: Documentación OpenAPI generada para el proyecto P3. Contiene todas las rutas públicas y protegidas.
+  contact:
+    name: Gabriel Andres Ochoa Padron
+    email: 31903665
+servers:
+  - url: '/' 
+    description: Servidor local (ruta base)
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        nombreCompleto:
+          type: string
+        email:
+          type: string
+    AuthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            token:
+              type: string
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          format: float
+        stock:
+          type: integer
+        sku:
+          type: string
+        brand:
+          type: string
+        slug:
+          type: string
+        categoryId:
+          type: integer
+        category:
+          $ref: '#/components/schemas/Category'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string
+paths:
+  /about:
+    get:
+      summary: Información del desarrollador
+      tags:
+        - General
+      responses:
+        '200':
+          description: Datos del desarrollador
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      nombreCompleto:
+                        type: string
+                      cedula:
+                        type: string
+                      seccion:
+                        type: string
+
+  /ping:
+    get:
+      summary: Health check
+      tags:
+        - General
+      responses:
+        '200':
+          description: OK
+
+  /health:
+    get:
+      summary: Health check (Render)
+      tags:
+        - General
+      responses:
+        '200':
+          description: OK
+
+  /auth/register:
+    post:
+      summary: Registrar nuevo usuario
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombreCompleto, email, password]
+              properties:
+                nombreCompleto:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '201':
+          description: Usuario creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Error en datos de entrada
+
+  /auth/login:
+    post:
+      summary: Iniciar sesión
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Credenciales inválidas
+
+  /users:
+    get:
+      summary: Obtener lista de usuarios (protegido)
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de usuarios
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        '401':
+          description: No autorizado
+    post:
+      summary: Crear usuario (protegido)
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: Usuario creado
+
+  /users/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Obtener usuario por id (protegido)
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Usuario encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: No encontrado
+    put:
+      summary: Actualizar usuario (protegido)
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: Usuario actualizado
+    delete:
+      summary: Eliminar usuario (protegido)
+      tags:
+        - Users
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Usuario eliminado
+
+  /products:
+    get:
+      summary: Lista pública de productos con filtros
+      tags:
+        - Public - Products
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: category
+          schema:
+            type: integer
+        - in: query
+          name: tags
+          schema:
+            type: string
+          description: Comma-separated tag IDs, e.g. 1,2,3
+        - in: query
+          name: price_min
+          schema:
+            type: number
+        - in: query
+          name: price_max
+          schema:
+            type: number
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: brand
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista paginada de productos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  meta:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                      page:
+                        type: integer
+                      limit:
+                        type: integer
+    post:
+      summary: Crear producto (protegido)
+      tags:
+        - Admin - Products
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                price:
+                  type: number
+                stock:
+                  type: integer
+                sku:
+                  type: string
+                brand:
+                  type: string
+                categoryId:
+                  type: integer
+                tags:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '201':
+          description: Producto creado
+
+  /products/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Obtener producto por id (protegido)
+      tags:
+        - Admin - Products
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Producto encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: No encontrado
+    put:
+      summary: Actualizar producto (protegido)
+      tags:
+        - Admin - Products
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        '200':
+          description: Actualizado
+    delete:
+      summary: Eliminar producto (protegido)
+      tags:
+        - Admin - Products
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Eliminado
+
+  /p/{id}-{slug}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Obtener producto público por id y slug (self-healing)
+      tags:
+        - Public - Products
+      responses:
+        '200':
+          description: Producto retornado correctamente
+        '301':
+          description: Redirección a la URL canónica si el slug difiere
+        '404':
+          description: Producto no encontrado
+
+  /categories:
+    get:
+      summary: Listar categorías (protegido)
+      tags:
+        - Admin - Categories
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de categorías
+    post:
+      summary: Crear categoría (protegido)
+      tags:
+        - Admin - Categories
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+      responses:
+        '201':
+          description: Categoría creada
+
+  /categories/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Obtener categoría por id (protegido)
+      tags:
+        - Admin - Categories
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Categoría encontrada
+    put:
+      summary: Actualizar categoría (protegido)
+      tags:
+        - Admin - Categories
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+    delete:
+      summary: Eliminar categoría (protegido)
+      tags:
+        - Admin - Categories
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Eliminado
+
+  /tags:
+    get:
+      summary: Listar tags (protegido)
+      tags:
+        - Admin - Categories
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de tags
+    post:
+      summary: Crear tag (protegido)
+      tags:
+        - Admin - Categories
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tag'
+      responses:
+        '201':
+          description: Tag creado
+
+  /tags/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      summary: Obtener tag por id (protegido)
+      tags:
+        - Admin - Categories
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Tag encontrado
+    put:
+      summary: Actualizar tag (protegido)
+      tags:
+        - Admin - Categories
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tag'
+    delete:
+      summary: Eliminar tag (protegido)
+      tags:
+        - Admin - Categories
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Eliminado
+
+tags:
+  - name: General
+    description: Endpoints generales
+  - name: Auth
+    description: Autenticación y registro
+  - name: Users
+    description: Gestión de usuarios
+  - name: Public - Products
+    description: Endpoints públicos de productos
+  - name: Admin - Products
+    description: Endpoints de administración de productos (requieren JWT)
+  - name: Admin - Categories
+    description: Endpoints para categorías y tags (requieren JWT)
