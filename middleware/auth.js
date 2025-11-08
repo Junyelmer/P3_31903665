@@ -1,35 +1,39 @@
 const jwt = require('jsonwebtoken');
 
-// Token secreto, debe ser cargado desde variables de entorno
-const JWT_SECRET = process.env.JWT_SECRET || 'mi_clave_secreta_superura';
+        // Token secreto, debe ser cargado desde variables de entorno
+        const JWT_SECRET = process.env.JWT_SECRET || 'mi_clave_secreta_superura';
 
 const protect = (req, res, next) => {
     let token;
 
-    // 1. Obtener el token del encabezado (Bearer <token>)
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        try {
-            // El token es la segunda parte del string 'Bearer <token>'
-            token = req.headers.authorization.split(' ')[1];
-            
-            // 2. Verificar el token
-            const decoded = jwt.verify(token, JWT_SECRET);
-            
-            // Adjuntar el ID del usuario al request (útil para GET /users/:id, etc.)
-            req.userId = decoded.id;
-            
-            return next();
+    // Soportar distintas formas de enviar el encabezado (mayúsculas/minúsculas)
+    const authHeader = req.headers.authorization || req.headers.Authorization;
 
+    if (authHeader) {
+        try {
+            // Posibles formatos: 'Bearer <token>' o solo '<token>'
+            const parts = authHeader.split(' ');
+            token = parts.length === 2 ? parts[1] : parts[0];
+
+            // Verificar el token (lanza si es inválido/expiró)
+            const decoded = jwt.verify(token, JWT_SECRET);
+
+            // Adjuntar el ID del usuario al request
+            req.userId = decoded.id;
+
+            return next();
         } catch (error) {
-            // Error si el token es inválido o expiró
+            // Añadir información mínima de depuración en entornos de test
+            if (process.env.NODE_ENV === 'test') {
+                // eslint-disable-next-line no-console
+                console.log('AUTH MIDDLEWARE: token parse/verify error:', error.message);
+            }
             return res.status(401).json({ status: 'error', message: 'Token inválido o expirado' });
         }
     }
 
-    // 3. Requisito: Rechazar peticiones sin token
-    if (!token) {
-        return res.status(401).json({ status: 'error', message: 'Acceso denegado: No se proporcionó token' });
-    }
+    // Rechazar peticiones sin token
+    return res.status(401).json({ status: 'error', message: 'Acceso denegado: No se proporcionó token' });
 };
 
 module.exports = { protect };
