@@ -49,6 +49,12 @@ module.exports = (sequelize, DataTypes) => {
   Product.associate = function(models) {
     Product.belongsTo(models.Category, { foreignKey: 'categoryId' });
     Product.belongsToMany(models.Tag, { through: 'ProductTags', foreignKey: 'productId', otherKey: 'tagId' });
+    Product.belongsToMany(models.Order, {
+      through: models.OrderItem,
+      foreignKey: 'productId',
+      otherKey: 'orderId',
+      as: 'orders'
+    });
   };
 
   // Hooks to generate slug

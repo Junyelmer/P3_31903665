@@ -2,6 +2,19 @@ require('dotenv').config(); // Carga las variables de entorno
 // La siguiente línea es importante para inicializar la conexión a la BD
 const db = require('./models'); // <-- Debe ser './models' si ambos están en la raíz
 
+const dbReady = process.env.NODE_ENV === 'test'
+    ? Promise.resolve()
+    : db.sequelize.sync()
+        .then(() => {
+            // eslint-disable-next-line no-console
+            console.log('Database synchronized');
+        })
+        .catch((err) => {
+            // eslint-disable-next-line no-console
+            console.error('Database synchronization failed:', err.message);
+            throw err;
+        });
+
 var express = require('express');
 var path = require('path'); // asegúrate de tener esto al inicio
 var cookieParser = require('cookie-parser');
@@ -55,6 +68,7 @@ const productRoutes = require('./routes/products');
 const categoryRoutes = require('./routes/categories');
 const tagRoutes = require('./routes/tags');
 const publicProductRoutes = require('./routes/publicProducts');
+const orderRoutes = require('./routes/orders');
 
 var app = express();
 
@@ -79,6 +93,7 @@ app.get('/openapi.yaml', (req, res) => {
 });
 app.use('/auth', authRoutes); // Ruta para registro y login
 app.use('/users', userRoutes); // Ruta para gestión de usuarios
+app.use('/orders', orderRoutes); // Gestión de órdenes (protegida)
 // Public product listing and self-healing endpoints mounted BEFORE management routes
 // Mount public listing at /products (public) and self-healing at /p
 app.use('/products', publicProductRoutes);
@@ -88,6 +103,8 @@ app.use('/p', publicProductRoutes);
 app.use('/products', productRoutes); // Gestión de productos (protegida)
 app.use('/categories', categoryRoutes); // Gestión de categorías (protegida)
 app.use('/tags', tagRoutes); // Gestión de tags (protegida)
+
+app.dbReady = dbReady;
 
 // ------------------------------------------------------------------
 // Documentación y implementación de GET /about
@@ -174,6 +191,8 @@ app.get('/ping', function(req, res, next) {
  *     description: Endpoints de administración para productos (requieren JWT)
  *   - name: Admin - Categories
  *     description: Endpoints de administración para categorías y tags (requieren JWT)
+ *   - name: Orders
+ *     description: Gestión y consulta de órdenes (requiere JWT)
  */
 
 /**
@@ -224,6 +243,45 @@ app.get('/ping', function(req, res, next) {
  *           type: array
  *           items:
  *             $ref: '#/components/schemas/Tag'
+ *     OrderItem:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         orderId:
+ *           type: integer
+ *         productId:
+ *           type: integer
+ *         quantity:
+ *           type: integer
+ *         unitPrice:
+ *           type: number
+ *           format: float
+ *         product:
+ *           $ref: '#/components/schemas/Product'
+ *     Order:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         userId:
+ *           type: integer
+ *         status:
+ *           type: string
+ *           enum: ['PENDING', 'COMPLETED', 'CANCELED', 'PAYMENT_FAILED']
+ *         totalAmount:
+ *           type: number
+ *           format: float
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *         items:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/OrderItem'
  */
 
 /**

@@ -5,7 +5,7 @@ const bcrypt = require('bcryptjs');
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
-      // Definir asociaciones aquí si las hubiera (ej: hasMany, belongsTo)
+      User.hasMany(models.Order, { foreignKey: 'userId', as: 'orders' });
     }
 
     // Método para comparar contraseñas
